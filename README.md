@@ -82,9 +82,9 @@ through OpenROAD (nangate45) to a routed layout with a timing report of the cros
 - `set_max_delay -ignore_clock_latency` bounds every crossing path (pointers and the memory read path) to one period of
   the faster clock; hold is not checked between the unrelated clocks (`set_false_path -hold`).
 
-OpenROAD result (nangate45, wclk 250 MHz, rclk 159 MHz): 1,457 µm² of cells (168 flip-flops), setup met (worst slack
-3.17 ns), every crossing path within its `set_max_delay` bound, 0 routing DRC violations, and the layout netlist passes
-the equivalence check against synthesis.
+OpenROAD result (nangate45, wclk 250 MHz, rclk 159 MHz): 1,556 µm² of cells (174 flip-flops), setup met (worst slack
+3.08 ns), every crossing path within its `set_max_delay` bound (worst slack 3.20 ns), reset recovery met on the
+synchronized resets, 0 routing DRC violations, and the layout netlist passes the equivalence check against synthesis.
 
 ## Run it
 
