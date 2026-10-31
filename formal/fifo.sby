@@ -1,0 +1,37 @@
+# fifo.sby : SymbiYosys for async_fifo with a metastability model in sync2 (see rtl/sync2.v, `ifdef FORMAL)
+#   bmc   : no assertion fails in 30 solver steps, for ANY clock frequencies and phases
+#   prove : k-induction: the assertions hold in EVERY reachable state (unbounded, not just 30 steps)
+#   cover : the interesting states are reachable (so a passing bmc is not vacuous)
+#   bug   : the planted binary-crossing bug must FAIL (a synchronized pointer runs ahead of the real one)
+#   bmc / cover / bug use depth 4 (AW = 2) for short traces; prove uses the real depth 16 (AW = 4, 1 s; depth 64 takes 7 s)
+[tasks]
+bmc
+prove
+cover
+bug
+
+[options]
+bmc: mode bmc
+prove: mode prove
+cover: mode cover
+bug: mode bmc
+depth 30
+prove: depth 12
+multiclock on
+
+[engines]
+smtbmc yices
+
+[script]
+read -formal -DFORMAL sync2.v
+~bug: read -formal -DFORMAL async_fifo.v
+bug:  read -formal -DFORMAL -DBUG_BINARY async_fifo_binary_bug.v
+~prove: chparam -set AW 2 async_fifo
+bug: chparam -set F_GRAY 0 sync2
+prep -top async_fifo
+
+[files]
+../rtl/sync2.v
+../rtl/async_fifo.v
+fifo_props.vh
+async_fifo_binary_bug.v
