@@ -121,6 +121,7 @@ The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`)
 
 ## Related
 
-[1 KB Cache: RTL to Signoff](https://github.com/ymt1001816-cyber/cache-rtl-to-signoff): a cache taken from RTL to a signed-off 45 nm layout, with UVM, cocotb, formal and DFT.
+- [1 KB Cache: RTL to Signoff](https://github.com/ymt1001816-cyber/cache-rtl-to-signoff): a cache taken from RTL to a signed-off 45 nm layout, with UVM, cocotb, formal and DFT.
+- [SRAM built-in self-repair](https://github.com/ymt1001816-cyber/sram-bisr): March C- MBIST, redundancy analysis and row repair, verified with cocotb and formal.
 
 RTL written by Meiyu Kuo. Testbench, formal harness and documentation were developed with AI assistance (Claude).
