@@ -24,6 +24,7 @@ smtbmc yices
 
 [script]
 read -formal -DFORMAL sync2.v
+read -formal -DFORMAL rst_sync.v
 ~bug: read -formal -DFORMAL async_fifo.v
 bug:  read -formal -DFORMAL -DBUG_BINARY async_fifo_binary_bug.v
 ~prove: chparam -set AW 2 async_fifo
@@ -32,6 +33,7 @@ prep -top async_fifo
 
 [files]
 ../rtl/sync2.v
+../rtl/rst_sync.v
 ../rtl/async_fifo.v
 fifo_props.vh
 async_fifo_binary_bug.v

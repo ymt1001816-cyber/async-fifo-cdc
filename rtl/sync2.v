@@ -47,11 +47,15 @@ module sync2 #(
     wire [W-1:0] lag_meta = g2b(d)    - g2b(meta);
     wire [W-1:0] lag_q    = g2b(d)    - g2b(q);
     generate if (F_GRAY) begin : g_inv
-        always @(*) if (rst_n) begin
+        // d keeps counting while this domain is still in reset (the other domain may already run),
+        // so the step asserts are not gated by rst_n, only skipped for the first 2 steps (history not filled)
+        reg [1:0] f_age = 0;
+        always @($global_clock) if (f_age != 2'd3) f_age <= f_age + 1'b1;
+        always @(*) if (f_age >= 2) begin
             a_step1: assert(step1 <= 1);
             a_step2: assert(step2 <= 1);
-            a_chain: assert(lag_meta <= lag_q);     // meta is between q and d
         end
+        always @(*) if (rst_n) a_chain: assert(lag_meta <= lag_q);     // meta is between q and d
     end endgenerate
 `endif
 endmodule

@@ -38,6 +38,7 @@
     // enough to rule out unreachable states (e.g. wgray not matching wbin)
     // computed 1 bit wider: occupancy 4 + lag 4 = 8 would wrap to 0 in AW+1 bits and look like an empty FIFO
     wire [AW+1:0] f_wview = {1'b0, f_occ} + {1'b0, f_lag_r};
+    wire [AW:0]   f_rview = f_seen_w - rbin;      // words the reader can see (<= words really in the FIFO)
     always @(*) if (!f_init) begin
         a_wgray:  assert(wgray == (wbin ^ (wbin >> 1)));
         a_rgray:  assert(rgray == (rbin ^ (rbin >> 1)));
@@ -45,6 +46,9 @@
         a_rview:  assert(f_lag_w <= f_occ);                    // the reader never sees words that are not there
         a_wfull:  assert(!(f_wview == (1 << AW)) || wfull);       // full as far as the writer can see -> wfull
         a_rempty: assert(!(f_seen_w == rbin) || rempty);              // empty as far as the reader can see -> rempty
+        // almost flags are early and safe: wafull = 0 -> more than AF free words; raempty = 0 -> more than AE words
+        a_wafull:  assert(wafull  || f_wview < (1 << AW) - AF);
+        a_raempty: assert(raempty || f_rview > AE);
     end
 `endif
     // reachability: without these, a passing assert could be vacuous (e.g. the FIFO never fills)
@@ -52,4 +56,6 @@
         c_full:      cover(wfull);
         c_occ_max:   cover(f_occ == (1 << AW));
         c_wrap:      cover(wbin[AW] && rbin[AW]);         // both pointers wrapped once
+        c_wafull:    cover(wafull && !wfull);              // almost full raised before full
+        c_raempty:   cover(raempty && !rempty && rbin != 0);  // almost empty raised before empty, after data
     end

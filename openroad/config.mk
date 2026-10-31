@@ -3,7 +3,7 @@
 export PLATFORM        = nangate45
 export DESIGN_NAME     = async_fifo
 export DESIGN_NICKNAME = async_fifo
-export VERILOG_FILES   = $(REPO)/rtl/async_fifo.v $(REPO)/rtl/sync2.v
+export VERILOG_FILES   = $(REPO)/rtl/async_fifo.v $(REPO)/rtl/sync2.v $(REPO)/rtl/rst_sync.v
 export SDC_FILE        = $(REPO)/openroad/constraint.sdc
 
 export CORE_UTILIZATION = 40

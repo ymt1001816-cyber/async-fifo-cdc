@@ -1,7 +1,7 @@
 tb/sim_build/
 tb/results.xml
 tb/__pycache__/
-formal/fifo_*/
+formal/*/
 *.vcd
 .DS_Store
 GUIDE.md

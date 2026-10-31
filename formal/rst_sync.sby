@@ -1,0 +1,23 @@
+# rst_sync.sby : formal check of the reset synchronizer alone, with a free-running raw reset (any time, any clock)
+#   prove : asynchronous assertion (low as soon as arst_n is low) and synchronous deassertion (rises only at a clk edge)
+#   cover : reset is released, asserted again while the clock is stopped, and released again
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+depth 20
+multiclock on
+
+[engines]
+smtbmc yices
+
+[script]
+read -formal -DFORMAL rst_sync.v rst_sync_props.sv
+prep -top rst_sync_props
+
+[files]
+../rtl/rst_sync.v
+rst_sync_props.sv
