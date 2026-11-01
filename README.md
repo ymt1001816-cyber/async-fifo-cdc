@@ -7,6 +7,9 @@ An asynchronous FIFO (write and read in unrelated clock domains) in Verilog, ver
 verification with a metastability model. The point of the project: a classic clock-domain-crossing (CDC) bug
 **passes every simulation** and is **caught by formal in 11 steps**.
 
+It also includes a small CDC library (pulse and handshake synchronizers), proven the same way, with a second
+classic bug that only formal catches: a multi-bit bus with one synchronizer per bit.
+
 Meiyu Kuo · personal project, 2026
 
 ## Result
@@ -72,6 +75,30 @@ flowchart LR
   induction step go through. A mutated full flag makes the proof fail, so it is not vacuous; depths 4, 16 and 64 all prove.
 - Cover statements prove the passing result is not vacuous: almost full, full, maximum occupancy, almost empty after data, and both pointers wrapping are all reachable.
 
+## CDC library
+
+What to use for each kind of crossing:
+
+| Crossing | Circuit | File |
+|---|---|---|
+| a slow 1-bit level | 2-flop synchronizer | `rtl/sync2.v` |
+| a 1-cycle pulse | **pulse synchronizer**: the pulse flips a toggle, the toggle crosses, the destination turns each change back into a pulse | `rtl/pulse_sync.v` |
+| an occasional multi-bit word | **handshake synchronizer**: only a 1-bit request and a 1-bit acknowledge cross; the word is held still until it has been taken | `rtl/handshake_sync.v` |
+| a stream of words | async FIFO | `rtl/async_fifo.v` |
+| ~~a multi-bit bus with one 2-flop synchronizer per bit~~ | planted bug: bits can settle in different cycles | `formal/bus_sync_bug.v` |
+
+| Design | cocotb simulation | Formal (metastability model) |
+|---|---|---|
+| Pulse synchronizer | ✅ 300 pulses, each exactly once, 1 cycle wide | ✅ **PROVEN**: no pulse lost or duplicated |
+| Handshake synchronizer | ✅ 300 words, intact and in order | ✅ **PROVEN**: every word arrives exactly as sent, in order, once |
+| One synchronizer per bit | ✅ **PASS (bug not seen)** | ❌ **FAIL**: the destination shows a mix of two words that was never sent |
+
+- The handshake's data bus is loaded through `rtl/async_capture.v`, which under formal can load any bit that changed in the
+  last solver step as its old or new value. The proof therefore shows that the bus really is still when it is loaded.
+- These proofs use the PDR (IC3) engine (`abc pdr`), which finds the inductive invariants itself; the FIFO proof uses
+  k-induction with hand-written invariants. Mutated designs (no edge detect, loading the word before the request has been
+  synchronized, sending before the acknowledge) all fail.
+
 ## Timing constraints for the crossings
 
 `openroad/constraint.sdc` constrains the clock-domain crossings, and `.github/workflows/openroad.yml` takes the FIFO
@@ -91,7 +118,7 @@ synchronized resets, 0 routing DRC violations, and the layout netlist passes the
 Needs [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Verilator, Icarus Verilog, cocotb, Yosys, SymbiYosys).
 
 ```bash
-ci/regress.sh all                       # lint, simulation, formal: 11 checks, about 20 s
+ci/regress.sh all                       # lint, simulation, formal, CDC library: 21 checks, about 20 s
 cd tb && make                           # simulation only  (N=words per test, COCOTB_RANDOM_SEED=n)
 cd tb && make BUG=binary                # the bug version in simulation: passes
 cd formal && sby -f fifo.sby prove      # unbounded formal proof (also: bmc, cover, bug)
@@ -107,10 +134,13 @@ The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`)
 | `rtl/async_fifo.v` | the FIFO |
 | `rtl/sync2.v` | 2-flop synchronizer, with the formal metastability model |
 | `rtl/rst_sync.v` | reset synchronizer (asynchronous assertion, synchronous deassertion) |
-| `tb/` | cocotb testbench and Makefile |
+| `rtl/pulse_sync.v`, `rtl/handshake_sync.v` | pulse and handshake synchronizers |
+| `rtl/async_capture.v` | register that loads a bus from another clock domain, with the formal metastability model |
+| `tb/` | cocotb testbenches: FIFO (`test_fifo.py`), CDC library (`test_cdc.py`, `Makefile.cdc`) |
 | `formal/fifo.sby`, `fifo_props.vh` | formal tasks (bmc, prove, cover, bug), properties and induction invariants |
 | `formal/rst_sync.sby`, `rst_sync_props.sv` | formal check of the reset synchronizer |
 | `formal/async_fifo_binary_bug.v`, `make_bug.py` | planted bug (pointers synchronized in binary) and the script that generates it from the RTL |
+| `formal/cdc.sby`, `cdc_props.sv`, `bus_sync_bug.v` | CDC library proofs and the per-bit bus bug |
 | `openroad/` | CDC timing constraints, OpenROAD config, crossing-path timing report |
 | `ci/regress.sh` | regression script used by CI |
 

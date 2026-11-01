@@ -5,7 +5,7 @@
 module sync2 #(
     parameter W = 5,
     /* verilator lint_off UNUSEDPARAM */  // used only under `ifdef FORMAL
-    parameter F_GRAY = 1                  // formal only: d is a Gray-coded counter (0 for the binary-bug version)
+    parameter F_GRAY = 0                  // formal only: 1 = d is a Gray-coded counter (adds induction invariants)
     /* verilator lint_on UNUSEDPARAM */
 ) (
     input              clk, rst_n,

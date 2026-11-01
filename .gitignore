@@ -8,3 +8,5 @@ GUIDE.md
 formal/fifo/
 build/
 tb/sim_build_bug/
+tb/sim_build_*/
+tb/results_*.xml

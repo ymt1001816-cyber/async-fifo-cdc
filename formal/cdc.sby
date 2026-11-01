@@ -1,0 +1,43 @@
+# cdc.sby : SymbiYosys for the CDC library (metastability model in sync2.v and async_capture.v)
+#   pulse      : pulse synchronizer, no lost and no duplicated pulses (PDR / IC3, unbounded)
+#   pulse_cov  : three pulses get through (the proof is not vacuous)
+#   bus        : handshake synchronizer, every received word is exactly the word sent, in order, once (PDR, unbounded)
+#   bus_cov    : three words get through
+#   bus_bug    : one 2-flop synchronizer per bit: must FAIL (the destination sees a mix of two words)
+[tasks]
+pulse     pgrp prv
+pulse_cov pgrp
+bus       bgrp hgrp prv
+bus_cov   bgrp hgrp
+bus_bug   bgrp
+
+[options]
+pulse:     mode prove
+pulse_cov: mode cover
+bus:       mode prove
+bus_cov:   mode cover
+bus_bug:   mode bmc
+depth 40
+multiclock on
+
+[engines]
+prv:  abc pdr
+~prv: smtbmc yices
+
+[script]
+read -formal -DFORMAL sync2.v async_capture.v
+pgrp:            read -formal -DFORMAL pulse_sync.v
+hgrp:            read -formal -DFORMAL handshake_sync.v
+bus_bug:         read -formal -DFORMAL bus_sync_bug.v
+bus_bug:         read -formal -DFORMAL -DBUG cdc_props.sv
+~bus_bug:        read -formal -DFORMAL cdc_props.sv
+pgrp:            prep -top pulse_props
+bgrp:            prep -top bus_props
+
+[files]
+../rtl/sync2.v
+../rtl/async_capture.v
+../rtl/pulse_sync.v
+../rtl/handshake_sync.v
+bus_sync_bug.v
+cdc_props.sv
